@@ -3,7 +3,7 @@ import pandas as pd
 from preprocess import load_preprocess_data
 
 class NeuralNetwork:
-    def __init__(self, input_size, hidden_size, output_size, learning_rate=0.01, epochs=1000):
+    def __init__(self, input_size, hidden_size, output_size, learning_rate=0.01, epochs=10000):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
@@ -11,7 +11,6 @@ class NeuralNetwork:
         self.epochs = epochs
 
         self.W1 = np.random.rand(self.input_size, self.hidden_size)
-
         self.B1 = np.zeros((1, self.hidden_size))
         self.W2 = np.random.randn(self.hidden_size, self.output_size)
         self.B2 = np.zeros((1, self.output_size))
@@ -40,16 +39,36 @@ class NeuralNetwork:
         return self.a2
 
     def compute_loss(self, y_pred, y):
-        #Loss Fucntion
-        return 
+        loss_per_sample = - (y * np.log(y_pred + 1e-8) + (1 - y) * np.log(1 - y_pred + 1e-8))
+        return np.sum(loss_per_sample) / len(y)
 
     def backward_prop(self, x, y):
-      # Backworkward Propagation 
-        return
+        m = y.shape[0]
+
+        dZ2 = self.a2 - y
+        dW2 = np.dot(self.a1.T, dZ2) / m
+        dB2 = np.sum(dZ2, axis=0, keepdims=True) / m
+
+        dA1 = np.dot(dZ2, self.W2.T)
+        dZ1 = dA1 * self.relu_derivative(self.z1)
+        dW1 = np.dot(x.T, dZ1) / m
+        dB1 = np.sum(dZ1, axis=0, keepdims=True) / m
+
+        self.W2 -= self.learning_rate * dW2
+        self.B2 -= self.learning_rate * dB2
+        self.W1 -= self.learning_rate * dW1
+        self.B1 -= self.learning_rate * dB1
 
     def train(self, x, y):
-        # Training the Neural Network
-        return
+        for epoch in range(self.epochs):
+            y_pred = self.forward_prop(x)
+            loss = self.compute_loss(y_pred, y)
+            self.loss.append(loss)
+
+            self.backward_prop(x, y)
+
+            if epoch % 100 == 0:
+                print(f"Epoch {epoch}, Loss: {loss:.4f}")
                 
     
         import matplotlib.pyplot as plt
@@ -71,7 +90,7 @@ class NeuralNetwork:
 # Main Execution
 x_train, x_test, y_train, y_test = load_preprocess_data("data/data.csv")
 # Initializing the Neural Network
-nn = NeuralNetwork(input_size=x_train.shape[1], hidden_size=10, output_size=1, learning_rate=0.01, epochs=1000)
+nn = NeuralNetwork(input_size=x_train.shape[1], hidden_size=10, output_size=1, learning_rate=0.01, epochs=10000)
 # Training the Neural Network
 nn.train(x_train, y_train)
 # Making Predictions
